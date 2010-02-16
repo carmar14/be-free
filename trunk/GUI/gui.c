@@ -29,10 +29,13 @@
 //---------------------------------------------------------------------------------------
 
 
+
+
 #include "./RTOS/include/FreeRTOS.h"
 #include "./RTOS/include/task.h"
 
 #include "./system.h"
+
 
 #include "./display/display.h"
 #include "./keypad/keypad.h"
@@ -40,11 +43,14 @@
 #include "./tools/tools.h"
 #include "gui.h"
 
+
 //DEBUG
 #include "./FatFs/sdcard.h"
 #include "./FatFs/ff.h"
 #include "./stream/stream.h"
 #include "./FatFs/ffconf.h"
+
+#include "./antsh/antsh.h"
 
 
 //---------------------------------------------------------------------------------------
@@ -70,6 +76,7 @@ static void gui_ent (void);
 static void test_spi (void);
 static void test_filesystem (void);
 static void fatfs_info (void);
+static void test_shell (void);
 
 static inline void show_menu (char_t *name);
 
@@ -105,7 +112,7 @@ static const menu_struct_t main_menu[MAIN_MENU_NUM_SM] =
     },
 
     {
-      "Settings         ", NULL,             &stgs_menu[0], &main_menu[2], &main_menu[1],                    &main_menu[0]
+      "Test Shell       ", &test_shell,      &stgs_menu[0], &main_menu[2], &main_menu[1],                    &main_menu[0]
     }
   };
 
@@ -359,6 +366,27 @@ fatfs_info (void)
 {
   display_str("Changs FatFs   ", 0, 15);
   vTaskDelay(DLY_1SEC);
+}
+
+
+//---------------------------------------------------------------------------------------
+// Test shell.
+//
+// Arguments:
+// N/A
+//
+// Return:
+// N/A
+//---------------------------------------------------------------------------------------
+static void 
+test_shell (void)
+{
+  antsh_cmd("xxx\x0d");
+  vTaskDelay(DLY_2SEC); 
+  antsh_cmd("mount 1\x0d");
+  vTaskDelay(DLY_2SEC); 
+  antsh_cmd("ls\x0d");
+  vTaskDelay(DLY_2SEC); 
 }
 
 

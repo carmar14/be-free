@@ -155,7 +155,7 @@ get_year (uint16_t *days)
     {
       if (*days >= LEAP_YEAR_DAYS)                                                        // Check for minimal amount of days.
         {
-          if (true == is_leap_year(year))
+          if (_TRUE_ == is_leap_year(year))
             {
               *days -= LEAP_YEAR_DAYS;
             }
@@ -200,7 +200,7 @@ get_mnth (uint16_t *days, uint16_t year)
           curr_mnth_days = mnth_days_map[i];
           if (MNTH_FEB == i)                                                              // Special check for february.
             {
-              if (true == is_leap_year(year))                                             // Check for lap year.
+              if (_TRUE_ == is_leap_year(year))                                           // Check for lap year.
                 {
                   curr_mnth_days = mnth_days_map[i] + 1;                                  // 29 days in february.
                 }
@@ -233,12 +233,12 @@ get_mnth (uint16_t *days, uint16_t year)
 static uint8_t
 is_leap_year (uint16_t year)
 {
-  uint8_t ret = false;
+  uint8_t ret = _FALSE_;
 
 
   if (((0 == year % 4) && (0 != year % 100)) || (0 == year % 400))
     {
-      ret = true;
+      ret = _TRUE_;
     }
   return (ret);
 }

@@ -219,7 +219,7 @@ display_scrl (char_t *str, uint8_t start, uint8_t end, uint8_t fast)
     {
       ret = DPY_MRC_ERR;
       cfg = xCFG_SCRL_STR | xCFG_SCRL_INFT;
-      if (true == fast)
+      if (_TRUE_ == fast)
         {
           cfg |= xCFG_SCRL_FAST;
         }

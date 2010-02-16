@@ -22,8 +22,8 @@
 //---------------------------------------------------------------------------------------
 
 
-#ifndef STDDEFS_H
-#define STDDEFS_H
+#ifndef TYPES_H
+#define TYPES_H
 
 
 //---------------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ typedef signed long int32_t;
 typedef signed long long int64_t;
 typedef float float32_t;
 typedef double float64_t;
-typedef enum {false = 0, true = 1} bool_t;
+typedef enum {_FALSE_ = 0, _TRUE_ = 1} bool_t;
 typedef union 
   {
     uint32_t lword;

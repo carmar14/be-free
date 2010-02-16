@@ -44,6 +44,7 @@ CFLAGS=                                 \
 -I./tools                               \
 -I./FatFs                               \
 -I./stream                              \
+-I./antsh                               \
 -Wall                                   \
 -Wextra                                 \
 -Wstrict-prototypes                     \
@@ -87,7 +88,9 @@ APP_THMUB_SRC=                          \
   FatFs/spi.c                           \
   system.c                              \
   FatFs/diskio.c                        \
-  FatFs/ff.c                            
+  FatFs/ff.c                            \
+  antsh/antsh.c                         \
+  antsh/antsh_io.c                      \
 
 
 
