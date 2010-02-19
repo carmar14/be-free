@@ -42,7 +42,7 @@
 
 #define ANTSH_CONF_USE_RTOS             0                                                 // ANTsh runs as a task.
 #define ANTSH_CONF_USE_RTOS_DLY         0                                                 // ANTsh may use RTOS build in delay API, e.g cooperative RTOS.
-#define ANTSH_DEBUG_API                 1                                                 // Enable debugging API.
+#define ANTSH_DEBUG_API                 0                                                 // Enable debugging API.
 
 
 #if ANTSH_CONF_USE_RTOS == 1 && ANTSH_CONF_USE_RTOS_DLY == 1

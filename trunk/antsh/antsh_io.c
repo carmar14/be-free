@@ -29,7 +29,7 @@
 //---------------------------------------------------------------------------------------
 
 
-#include "types.h"
+#include "./display/display.h"                                                            
 
 
 //---------------------------------------------------------------------------------------
@@ -67,11 +67,6 @@
 void 
 antsh_out (const char_t *data, const uint16_t count)
 {
-  uint16_t i;
-
-
-  for (i = 0; i < count; i++)
-    {
-    putchar(data[i]);
-    }
+  display_clr();
+  display_str(data, 0, 15);
 }

@@ -150,6 +150,8 @@ FRESULT f_readdir (DIR* DirObject, FILINFO* FileInfo);
 FRESULT f_opendir (DIR* DirObject, const CHAR* DirName);
 FRESULT f_mount (BYTE Drive, FATFS *FileSystemObject);
 FRESULT f_chdir (const CHAR* Path);
+FRESULT f_chdrive (BYTE Drive);
+
 
 
 #endif

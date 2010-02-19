@@ -39,6 +39,9 @@
 #include "debug_api.h"
 #else                                                                                     // Use file system.
 #include "./FatFs/ff.h"
+#include "./display/display.h"
+#include "./system.h"
+#include "./stream/stream.h"
 #endif
 
 
@@ -276,6 +279,7 @@ antsh_cmd (const char_t *cmd_str)
   p_shell->out.count       = 0;
   p_shell->in.count        = 0;
   p_shell->in.size         = 0;
+  
 
   for (i = 0; i < ANTSH_CONF_BUFF_IN_SIZE && (0x0D != *cmd_str) && (0 != *cmd_str); i++)
     {
@@ -662,6 +666,7 @@ mount (void)
       if (FR_OK == f_mount(drv, &p_shell->drv.fs))                                        // Mount drive.
         {
           shell_buff_prnt(shell_vbse[SHELL_DRV_MNT_OK], _TRUE_);                          // Drive mounted.
+          f_chdrive(drv);                                                                 // Change drive to mounted drive.
         }
       else
         {
