@@ -53,7 +53,7 @@
 #define NUM_TRIES                       10U                                               // Number of tries to receive data.
 #define BLK_SIZE                        512U                                              // Size of a sector.
 
-#define NUM_CMDS                        9U                                                // Num supported commands.
+#define NUM_CMDS                        11U                                               // Num supported commands.
 #define NUM_CMD_HDLRS                   NUM_CMDS                                          // Number of handlers for commands.
 #define CMD0                            0
 #define CMD8                            1
@@ -64,6 +64,8 @@
 #define CMD17                           6
 #define CMD18                           7
 #define CMD12                           8
+#define CMD24                           9
+#define CMD25                           10
 
 // bld_cmd() function opts.
 #define xBLD_CMD_USE_ARGS               0x01U                                             // Flag bld_cmd() to use given arguments.
@@ -93,6 +95,11 @@
 #define TKN_START_BLK                   0xFE                                              // Single block read/write, multiple block read.
 #define TKN_START_MUL_BLK_WR            0xFC                                              // Multiple block write.
 #define TKN_STOP_MUL_BLK_WR             0xFD                                              // In case of multiple block write stop - this token is received.
+#define TKN_DATA_RESP                   0x1F                                              // Data response token |XXX0|Status|1| - 3bits for status.
+
+// Data response token status flags.
+#define xSTAT_DATA_OK                   0x05                                              // Bit 2 set - data accepted, bit 0 is always set.
+
 
 typedef enum
   {
@@ -135,6 +142,7 @@ static void snd_cmd (uint8_t *cmd);
 static inline uint8_t rd_r1 (void);
 static inline void rd_ocr (void);
 static card_rply_t rd_data_blk (uint8_t *buff, uint16_t data_size);
+static card_rply_t wr_data_blk (const uint8_t *buff, uint8_t tkn);
 
 static card_rply_t cmd0_rply_hdlr (void);
 static card_rply_t cmd8_rply_hdlr (void);
@@ -145,6 +153,8 @@ static card_rply_t cmd16_rply_hdlr (void);
 static card_rply_t cmd17_rply_hdlr (void);
 static card_rply_t cmd18_rply_hdlr (void);
 static card_rply_t cmd12_rply_hdlr (void);
+static card_rply_t cmd24_rply_hdlr (void);
+static card_rply_t cmd25_rply_hdlr (void);
 
 
 //---------------------------------------------------------------------------------------
@@ -164,7 +174,9 @@ static sdc_cmd_t sdc_cmds[NUM_CMDS] =
     { (0x40 + 16),     0x00000000,   0x01},                                               // CMD16 - set block size.
     { (0x40 + 17),     0x00000000,   0x01},                                               // CMD17 - read single block.
     { (0x40 + 18),     0x00000000,   0x01},                                               // CMD18 - read multiple blocks.
-    { (0x40 + 12),     0x00000000,   0x01}                                                // CMD12 - stop transaction.
+    { (0x40 + 12),     0x00000000,   0x01},                                               // CMD12 - stop transaction.
+    { (0x40 + 24),     0x00000000,   0x01},                                               // CMD24 - write single block.
+    { (0x40 + 25),     0x00000000,   0x01}                                                // CMD25 - write multiple blocks.
   };
 
 static const sdc_rply_hdlr_t sdc_rply_hdlrs[NUM_CMD_HDLRS] =
@@ -177,7 +189,9 @@ static const sdc_rply_hdlr_t sdc_rply_hdlrs[NUM_CMD_HDLRS] =
     &cmd16_rply_hdlr,
     &cmd17_rply_hdlr,
     &cmd18_rply_hdlr,
-    &cmd12_rply_hdlr
+    &cmd12_rply_hdlr,
+    &cmd24_rply_hdlr,
+    &cmd25_rply_hdlr
   };
 
 static sdc_t sdc;
@@ -379,43 +393,60 @@ sdc_rd (uint8_t *buff, uint32_t sector, uint8_t count)
 sdc_mrc_t
 sdc_wr (const uint8_t *buff, uint32_t sector, uint8_t count)
 {
-
+  sdc_t *p_sdc  = &sdc;
   sdc_mrc_t ret = SDC_MRC_INIT_ERR;
-#if 0//bug
+  uint16_t tmr  = 0;
   uint8_t cmd   = CMD25;
+  uint8_t tkn   = TKN_START_MUL_BLK_WR;
 
 
-  if (0 != (p_sdc->stat & xSTAT_INIT_OK))
+  if (0 != (p_sdc->stat & xSTAT_INIT_OK))                                                 // Check if card is initialised.
     {
-      if (TYPE_SCSD == p_sdc->type)
+      ret = SDC_MRC_WR_ERR;
+      if (TYPE_SCSD == p_sdc->type)                                                       // Check card type.
         {
           sector *= BLK_SIZE;
         }
-      if (1 == count)
+      if (1 == count)                                                                     // If one block to write change cmd and token.
         {
           cmd = CMD24;
+          tkn = TKN_START_BLK;
         }
       bld_cmd(p_sdc->cmd, sector, cmd, xBLD_CMD_USE_ARGS);
       snd_cmd(p_sdc->cmd);
       if (RPLY_OK == p_sdc->hdlr[cmd]())
         {
-          while (count-- > 0)
+	  for ( ; count > 0; count--)
             {
-              if (RPLY_ERR == wr_data_blk(buff, token))
+              if (RPLY_ERR == wr_data_blk(buff, tkn))
                 {
-                  ret = SDC_MRC_WR_ERR;
-                  break;
+                  break;                                                                  // Block write error - stop here.
                 }
               buff += BLK_SIZE;
             }
-          if (CMD25 == cmd)
+          if (0 == count)
             {
-              wr_data_blk(
+              ret = SDC_MRC_WR_OK;                                                        // All blocks written ok.
+            }
+          if (CMD25 == cmd)                                                               // Check if this was multiple block write.
+            {
+              if (RPLY_ERR == wr_data_blk(buff, TKN_STOP_MUL_BLK_WR))                     // Send stop transmition token.
+                {
+                  ret = SDC_MRC_WR_ERR;
+                }
+            }
+          for (tmr = DLY_100MS; tmr > 0; tmr -= DLY_10MS)                                 // Wait till line is busy.
+            {
+              if (0xFF == spi_rd())                   
+                {
+                  break;                                                                  // Card is active again.
+                }
+              vTaskDelay(DLY_10MS);                                                       //bugtraker - this may be bottleneck for data write.
             }
         }
 
     }
-#endif
+
   return (ret);
 }
 
@@ -494,7 +525,7 @@ snd_cmd (uint8_t *cmd)
   uint8_t i;
 
 
-//bug - where is CS assert/deassert?
+//bugtraker - where is CS assert/deassert?
   
   while ((0xFF != spi_rd()) && try--);
 
@@ -502,7 +533,7 @@ snd_cmd (uint8_t *cmd)
     {
       for (i = 0; i < CMD_LEN; i++)
         {
-          spi_td(*cmd++);
+          spi_wr(*cmd++);
         }
     }
 }
@@ -559,7 +590,8 @@ rd_ocr (void)
 // Read a block of data.
 //
 // Arguments:
-// N/A
+// uint8_t *buff      - pointer to data,
+// uint16_t data_size - size of data to be read.
 //
 // Return:
 // N/A
@@ -569,20 +601,19 @@ rd_data_blk (uint8_t *buff, uint16_t data_size)
 {
   card_rply_t ret = RPLY_ERR;
   uint16_t tmr    = DLY_100MS;
-  uint16_t i;
-  uint8_t token;
+  uint8_t tkn;
 
 
   do                                                                                      // Try to get token for 100ms.
     {
-      token = spi_rd();
+      tkn = spi_rd();
       vTaskDelay(DLY_10MS);
       tmr -= DLY_10MS;
-    } while ((0xFF == token) && tmr > 0);
+    } while ((0xFF == tkn) && tmr > 0);
 
-  if (TKN_START_BLK == token)                                                             // Check for start of block token.
+  if (TKN_START_BLK == tkn)                                                               // Check for start of block token.
     {
-      for (i = 0; i < data_size; i++)                                                     // Read block of data.
+      for ( ; data_size > 0; data_size--)                                                     // Read block of data.
         {
           *buff++ = spi_rd();
         }
@@ -590,6 +621,56 @@ rd_data_blk (uint8_t *buff, uint16_t data_size)
       spi_rd();
       ret = RPLY_OK;
     }
+
+  return (ret);
+}
+
+
+//---------------------------------------------------------------------------------------
+// Write a block of data.
+//
+// Arguments:
+// uint8_t *buff - pointer to data,
+// uint8_t tkn   - token.
+//
+// Return:
+// card_rply_t ret - card reply.
+//---------------------------------------------------------------------------------------
+static card_rply_t
+wr_data_blk (const uint8_t *buff, uint8_t tkn)
+{
+  card_rply_t ret = RPLY_ERR;
+  uint16_t tmr    = DLY_500MS;
+  uint16_t i      = 0;
+  uint8_t data    = 0;
+ 
+
+  while ((0xFF != spi_rd()) && tmr > 0)                                                   // Wait for card to be ready (500[ms] timeout).
+    {
+      vTaskDelay(DLY_10MS);
+      tmr -= DLY_10MS;
+    }
+  if (tmr > 0)                                                                            // Check if there was a timeout.
+    {
+      ret = RPLY_OK;
+      spi_wr(tkn);
+      if (TKN_STOP_MUL_BLK_WR != tkn)                                                     // Process only for multi block command.
+        {
+          for (i = 0; i < BLK_SIZE; i++)
+            {
+              spi_wr(*buff++);
+            }
+          spi_wr(0xFF);                                                                   // Dummy checksum.
+          spi_wr(0xFF);
+          data = spi_rd();
+
+//bugtraker check what is the card response like.
+          if ((data & TKN_DATA_RESP) != xSTAT_DATA_OK)                                                      // Check if successfuly written.
+            {
+              ret = RPLY_ERR;
+            }
+         }
+    }  
 
   return (ret);
 }
@@ -633,7 +714,6 @@ static card_rply_t
 cmd8_rply_hdlr (void)
 {
   sdc_cmd_t *p_sdc_cmds = &sdc_cmds[CMD8];
-  sdc_t *p_sdc          = &sdc;
   uint32_t buf          = 0;
   card_rply_t ret       = RPLY_ERR;
   uint8_t try           = rd_r1();
@@ -871,4 +951,55 @@ cmd12_rply_hdlr (void)
   return (ret);
 }
 
+
+//---------------------------------------------------------------------------------------
+// Command 24 - Single write.
+//
+// Arguments:
+// N/A
+//
+// Return:
+// card_rply_t ret - handler result.
+//---------------------------------------------------------------------------------------
+static card_rply_t
+cmd24_rply_hdlr (void)
+{
+  sdc_t *p_sdc    = &sdc;
+  card_rply_t ret = RPLY_ERR;
+  uint8_t try     = rd_r1();
+
+
+  if ((0 == p_sdc->r1) && try > 0)
+    {
+      ret = RPLY_OK;
+    }
+
+  return (ret);
+}
+
+
+//---------------------------------------------------------------------------------------
+// Command 25 - Single write.
+//
+// Arguments:
+// N/A
+//
+// Return:
+// card_rply_t ret - handler result.
+//---------------------------------------------------------------------------------------
+static card_rply_t
+cmd25_rply_hdlr (void)
+{
+  sdc_t *p_sdc    = &sdc;
+  card_rply_t ret = RPLY_ERR;
+  uint8_t try     = rd_r1();
+
+
+  if ((0 == p_sdc->r1) && try > 0)
+    {
+      ret = RPLY_OK;
+    }
+
+  return (ret);
+}
 

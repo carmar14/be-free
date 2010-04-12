@@ -48,7 +48,7 @@
 
 
 void spi_init (void);
-void spi_td (uint8_t data);
+void spi_wr (uint8_t data);
 uint8_t spi_rd (void);
 
 

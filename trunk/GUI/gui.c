@@ -44,12 +44,11 @@
 #include "gui.h"
 
 
-//DEBUG
+//bugtraker
 #include "./FatFs/sdcard.h"
 #include "./FatFs/ff.h"
 #include "./stream/stream.h"
 #include "./FatFs/ffconf.h"
-
 #include "./antsh/antsh.h"
 
 
@@ -60,7 +59,7 @@
 //---------------------------------------------------------------------------------------
 
 
-#define MAIN_MENU_NUM_SM                3
+#define MAIN_MENU_NUM_SM                4
 
 
 //---------------------------------------------------------------------------------------
@@ -77,6 +76,7 @@ static void test_spi (void);
 static void test_filesystem (void);
 static void fatfs_info (void);
 static void test_shell (void);
+static void rdwr_spi (void);
 
 static inline void show_menu (char_t *name);
 
@@ -104,7 +104,7 @@ static const menu_struct_t stgs_menu[1];
 static const menu_struct_t main_menu[MAIN_MENU_NUM_SM] =
   {
     { 
-      "Test SPI         ", &test_spi,        &main_menu[0], &main_menu[0], &main_menu[MAIN_MENU_NUM_SM - 1], &main_menu[1]
+      "Init SPI         ", &test_spi,        &main_menu[0], &main_menu[0], &main_menu[MAIN_MENU_NUM_SM - 1], &main_menu[1]
     },
 
     { 
@@ -112,7 +112,11 @@ static const menu_struct_t main_menu[MAIN_MENU_NUM_SM] =
     },
 
     {
-      "Test Shell       ", &test_shell,      &stgs_menu[0], &main_menu[2], &main_menu[1],                    &main_menu[0]
+      "Test Shell       ", &test_shell,      &stgs_menu[0], &main_menu[2], &main_menu[1],                    &main_menu[3]
+    },
+
+    {
+      "Rd/Wr SPI        ", &rdwr_spi,        &main_menu[3], &main_menu[3], &main_menu[2],                    &main_menu[0]
     }
   };
 
@@ -120,11 +124,15 @@ static const menu_struct_t stgs_menu[1] =
   {
     {
       "FatFs Info      ", &fatfs_info,       &stgs_menu[0], &main_menu[2], &stgs_menu[0],                    &stgs_menu[0]
-    },
+    }
   };
 
 
 static FATFS FileSystemObj;
+
+//bugtraker
+static uint8_t test_buff[512];
+
 
 //---------------------------------------------------------------------------------------
 //
@@ -381,12 +389,14 @@ fatfs_info (void)
 static void 
 test_shell (void)
 {
-  antsh_cmd("xxx\x0d");
-  vTaskDelay(DLY_2SEC); 
-  antsh_cmd("mount 1\x0d");
-  vTaskDelay(DLY_2SEC); 
-  antsh_cmd("ls\x0d");
-  vTaskDelay(DLY_2SEC); 
+  antsh_cmd("mount 1");
+  vTaskDelay(DLY_1SEC); 
+
+  antsh_cmd("cd 1:/folder0");
+  vTaskDelay(DLY_1SEC); 
+
+  antsh_cmd("ls");
+  vTaskDelay(DLY_1SEC); 
 }
 
 
@@ -406,4 +416,77 @@ show_menu (char_t *name)
 {
   display_str(name, 0, 15);
 }
+
+
+//---------------------------------------------------------------------------------------
+// Test SPI read/write.
+//
+// Arguments:
+// N/A
+//
+// Return:
+// N/A
+//---------------------------------------------------------------------------------------
+static void
+rdwr_spi (void)
+{
+  uint8_t i        = 0;
+
+
+  for (i = 0; i < 16; i++)
+    {
+      test_buff[i] = 'a' + i;
+    }
+
+  switch (sdc_wr(test_buff, 1, 1))
+    {
+      case SDC_MRC_INIT_ERR:
+        display_str("Init error       ", 0, 15);
+        break;
+
+      case SDC_MRC_WR_ERR:
+        display_str("Write error      ", 0, 15);
+        break;
+
+      case SDC_MRC_WR_OK:
+        display_str("Write OK         ", 0, 15);
+        break;
+
+      default:
+        display_str("Unknown error", 0, 15);
+        break;
+    }
+
+  for (i = 0; i < 16; i++)
+    {
+      test_buff[i] = 0;
+    }
+  vTaskDelay(DLY_1SEC);
+  switch (sdc_rd(test_buff, 1, 1))
+    {
+      case SDC_MRC_NOT_RDY:
+        display_str("Not rdy          ", 0, 15);
+        break;
+
+      case SDC_MRC_RD_ERR:
+        display_str("Read error       ", 0, 15);
+        break;
+
+      case SDC_MRC_RD_OK:
+        display_str("Read OK          ", 0, 15);
+        vTaskDelay(DLY_1SEC);
+        display_str(test_buff, 0, 15);
+        break;
+
+      default:
+        display_str("Unknown error    ", 0, 15);
+        break;
+    }
+  vTaskDelay(DLY_1SEC);
+
+}
+
+
+
+
 

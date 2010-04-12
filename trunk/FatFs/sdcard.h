@@ -50,7 +50,9 @@ typedef enum
     SDC_MRC_INIT_ERR = 1,
     SDC_MRC_NOT_RDY  = 2,
     SDC_MRC_RD_OK    = 3,
-    SDC_MRC_RD_ERR   = 4
+    SDC_MRC_RD_ERR   = 4,
+    SDC_MRC_WR_OK    = 5,
+    SDC_MRC_WR_ERR   = 6
   } sdc_mrc_t;
 
 
