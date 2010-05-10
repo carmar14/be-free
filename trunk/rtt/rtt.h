@@ -43,6 +43,11 @@
 //---------------------------------------------------------------------------------------
 
 
+#define RTT_FMT_UNIX                    0
+#define RTT_FMT_ISO_8601                1
+#define RTT_FMT_FATFS                   2
+
+
 //---------------------------------------------------------------------------------------
 //
 //                        G L O B A L   P R O T O T Y P E S
@@ -54,6 +59,7 @@ void rtt_init (void);
 uint32_t get_fattime (void);
 uint32_t rtt_get_time (void);
 void rtt_irq_handler (void);
+void rtt_time_fmt (char_t *buff, uint32_t *time, uint8_t fmt);
 
 
 #endif

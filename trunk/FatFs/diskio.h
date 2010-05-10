@@ -8,7 +8,7 @@
 #include "integer.h"
 
 
-#define _READONLY 1
+#define _READONLY 0
 /* Status of Disk Functions */
 typedef BYTE	DSTATUS;
 

@@ -29,7 +29,12 @@
 //---------------------------------------------------------------------------------------
 
 
-#include "./display/display.h"                                                            
+#include "types.h"
+#include "antsh_conf.h"
+
+#if ANTSH_DEBUG_API == 0
+#include "./display/display.h"
+#endif
 
 
 //---------------------------------------------------------------------------------------
@@ -67,6 +72,5 @@
 void 
 antsh_out (const char_t *data, const uint16_t count)
 {
-  display_clr();
   display_str(data, 0, 15);
 }

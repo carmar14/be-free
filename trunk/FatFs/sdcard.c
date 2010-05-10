@@ -47,7 +47,7 @@
 //---------------------------------------------------------------------------------------
 
 
-#define SDC_RX_BUFF_SIZE                1024U                                              // Size (in bytes) of a SPI rx buffer.
+#define SDC_RX_BUFF_SIZE                1024U                                             // Size (in bytes) of a SPI rx buffer.
 #define CMD_LEN                         6U                                                // Length of SPI cmd (bytes).
 #define OCR_SIZE                        4U                                                // OCR register size.
 #define NUM_TRIES                       10U                                               // Number of tries to receive data.
@@ -139,6 +139,7 @@ typedef struct
 static void bld_cmd (uint8_t *buf, uint32_t args, uint8_t cmd_num, uint8_t opts);
 static void snd_cmd (uint8_t *cmd);
 
+static inline uint16_t wt_rdy (void);
 static inline uint8_t rd_r1 (void);
 static inline void rd_ocr (void);
 static card_rply_t rd_data_blk (uint8_t *buff, uint16_t data_size);
@@ -452,22 +453,33 @@ sdc_wr (const uint8_t *buff, uint32_t sector, uint8_t count)
 
 
 //---------------------------------------------------------------------------------------
-// Disc I/O control.
+// SD card write.
 //
 // Arguments:
-// uint8_t ctrl - control code.
-// void *buff - buffer to send/receive control data.
+// uint8_t count - number of sectors to read
 //
 // Return:
-// sdc_mrc_t ret - return code.
+// uint8_t result - card read result.
 //---------------------------------------------------------------------------------------
 sdc_mrc_t
-sdc_ioctl (uint8_t ctrl, void *buff)
+sdc_ioctl (uint8_t ctrl)
 {
-  sdc_mrc_t ret = SDC_MRC_INIT_ERR;
+  sdc_mrc_t ret = SDC_MRC_NOT_RDY;
 
+
+  switch (ctrl)
+    {
+      default:
+        if (0 != wt_rdy())
+          {
+            ret = SDC_MRC_RDY;
+          }
+        break;
+    }
+  
   return (ret);
 }
+
 
 //---------------------------------------------------------------------------------------
 //
@@ -521,15 +533,10 @@ bld_cmd (uint8_t *buf, uint32_t args, uint8_t cmd_num, uint8_t opts)
 static void
 snd_cmd (uint8_t *cmd)
 {
-  uint8_t try = NUM_TRIES;
   uint8_t i;
 
 
-//bugtraker - where is CS assert/deassert?
-  
-  while ((0xFF != spi_rd()) && try--);
-
-  if (try > 0)
+  if (0 != wt_rdy())
     {
       for (i = 0; i < CMD_LEN; i++)
         {
@@ -540,13 +547,39 @@ snd_cmd (uint8_t *cmd)
 
 
 //---------------------------------------------------------------------------------------
-// Read R1.
+// Wait for card to be ready. When card is ready (nothing is pending) it responds 
+// with 0xFF.
 //
 // Arguments:
 // N/A
 //
 // Return:
+// uint16_t tmr - time left from 500[ms].
+//---------------------------------------------------------------------------------------
+static inline uint16_t
+wt_rdy (void)
+{
+  uint16_t tmr = DLY_500MS;
+
+
+  while ((0xFF != spi_rd()) && tmr > 0)                                                   // Wait for card to be ready (500[ms] timeout).
+    {
+      vTaskDelay(DLY_10MS);
+      tmr -= DLY_10MS;
+    }
+
+  return (tmr);
+}
+
+
+//---------------------------------------------------------------------------------------
+// Read R1. Read stops when MSB in R1 is cleared.
+//
+// Arguments:
 // N/A
+//
+// Return:
+// uint8_t try - number of tryies to read r1.
 //---------------------------------------------------------------------------------------
 static inline uint8_t
 rd_r1 (void)
@@ -640,17 +673,11 @@ static card_rply_t
 wr_data_blk (const uint8_t *buff, uint8_t tkn)
 {
   card_rply_t ret = RPLY_ERR;
-  uint16_t tmr    = DLY_500MS;
   uint16_t i      = 0;
   uint8_t data    = 0;
  
 
-  while ((0xFF != spi_rd()) && tmr > 0)                                                   // Wait for card to be ready (500[ms] timeout).
-    {
-      vTaskDelay(DLY_10MS);
-      tmr -= DLY_10MS;
-    }
-  if (tmr > 0)                                                                            // Check if there was a timeout.
+  if (0 != wt_rdy())                                                                            // Check if there was a timeout.
     {
       ret = RPLY_OK;
       spi_wr(tkn);

@@ -50,7 +50,7 @@
 #endif
 
 #define ANTSH_CONF_BUFF_IN_SIZE         40U                                               // Size of shell in buffer in bytes.
-#define ANTSH_CONF_BUFF_OUT_SIZE        40U                                               // Size of shell out buffer in bytes.
+#define ANTSH_CONF_BUFF_OUT_SIZE        100U                                              // Size of shell out buffer in bytes.
 
 
 //---------------------------------------------------------------------------------------

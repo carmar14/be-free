@@ -53,7 +53,7 @@
 
 
 // Shell commands.
-#define SHELL_NUM_CMDS                  4                                                 // Number supported commands.
+#define SHELL_NUM_CMDS                  5                                                 // Number supported commands.
 #define SHELL_NO_CMD                    0                                                 // Command 0 reserved for errors.
 
 
@@ -66,6 +66,9 @@
 #define SHELL_PATH_ACC_DEN              5U                                                // Path access denied.
 #define SHELL_INV_DRV                   6U                                                // Invalid drive.
 #define SHELL_DRV_MNT_OK                7U                                                // Drive mounted.
+#define SHELL_MKDIR_OK                  8U                                                // Directory created.
+#define SHELL_MKDIR_EXIST               9U                                                // Name already exists.
+#define SHELL_MKDIR_ERR                 10U                                               // Not handled error.
 
 
 // Shell format strings.
@@ -155,6 +158,7 @@ static void error (void);
 static void ls (void);
 static void cd (void);
 static void mount (void);
+static void mkdir (void);
 
 
 //---------------------------------------------------------------------------------------
@@ -167,16 +171,17 @@ static void mount (void);
 static shell_t shell;
 
 
-static const shell_cmd_t shell_cmds[SHELL_NUM_CMDS] =
+static const shell_cmd_t shell_cmds[SHELL_NUM_CMDS] =                                     // Shell commands.
   {
     { "",        0,      &error },
     { "ls",      2,      &ls    },
     { "cd",      2,      &cd    },
-    { "mount",   5,      &mount }
+    { "mount",   5,      &mount },
+    { "mkdir",   5,      &mkdir }
   };
 
 
-static const char_t *shell_vbse[] =
+static const char_t *shell_vbse[] =                                                       // Shell verbose responses.
   {
     "\nInvalid option",
     "\nInvalid switch",
@@ -185,11 +190,14 @@ static const char_t *shell_vbse[] =
     "\nBuffer full",
     "\nPath access denied",
     "\nIvalid drive",
-    "\nDrive mounted"
+    "\nDrive mounted",
+    "\nDirectory created",
+    "\nDirectory exists",
+    "\nmkdir error"
   };
 
 
-static const char_t *shell_pdng[] =
+static const char_t *shell_pdng[] =                                                       // Shell padding (4 spaces).
   {
     "    "
   };
@@ -586,7 +594,7 @@ ls (void)
           if (0 != p_shell->drv.fi.fname[0])                                              // Check if file exist.
             {
               len  = str_len(p_shell->drv.fi.fname) + FOUR_SP_LEN;                        // Calculate str len + four padding spaces.
-              diff = ANTSH_CONF_BUFF_IN_SIZE - p_shell->out.count;
+              diff = ANTSH_CONF_BUFF_OUT_SIZE - p_shell->out.count;
               if (diff >= len)
                 {
                   shell_buff_prnt(p_shell->drv.fi.fname, _FALSE_);                        // Print file name.
@@ -675,5 +683,42 @@ mount (void)
     }
 }
 
+
+//---------------------------------------------------------------------------------------
+// Create directory.
+//
+// Arguments:
+// N/A
+//
+// Return:
+// N/A
+//---------------------------------------------------------------------------------------
+static void
+mkdir (void)
+{
+  shell_t *p_shell = &shell;
+
+
+  switch (f_mkdir(&p_shell->in.buff[p_shell->in.count]))                                  // Create directory.
+    {
+      case FR_OK:
+        shell_buff_prnt(shell_vbse[SHELL_MKDIR_OK], _TRUE_);                              // Directory created.
+        break;
+
+      case FR_NO_PATH:
+      case FR_INVALID_NAME:
+      case FR_INVALID_DRIVE:
+        shell_buff_prnt(shell_vbse[SHELL_INV_PATH], _TRUE_);                              // Invalid path.
+        break;
+
+      case FR_EXIST:
+        shell_buff_prnt(shell_vbse[SHELL_MKDIR_EXIST], _TRUE_);                           // Invalid path.
+        break;
+
+      default:
+        shell_buff_prnt(shell_vbse[SHELL_MKDIR_ERR], _TRUE_);                             // Invalid path.
+        break;
+    }
+}
 
 

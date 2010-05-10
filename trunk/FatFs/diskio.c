@@ -6,7 +6,7 @@
 /*-----------------------------------------------------------------------*/
 
 #include "diskio.h"
-#include "sdcard.h"                     // BugTraker - include SDcard interface.
+#include "sdcard.h"                                                                       // BugTraker - include SDcard interface.
 
 /*-----------------------------------------------------------------------*/
 /* Correspondence between physical drive number and physical drive.      */
@@ -112,7 +112,7 @@ DRESULT disk_read (
 /*-----------------------------------------------------------------------*/
 /* Write Sector(s)                                                       */
 
-#if _READONLY == 1
+#if _READONLY == 0
 DRESULT disk_write (
 	BYTE drv,			/* Physical drive nmuber (0..) */
 	const BYTE *buff,	/* Data to be written */
@@ -121,14 +121,24 @@ DRESULT disk_write (
 )
 {
 	DRESULT res = RES_PARERR;
-	sdc_mrc_t result;
+
 
 	switch (drv) {
-	case 0 :
-		result = sdc_wr(buff, sector, count);
-		// translate the reslut code here
+	case MMC :
+          switch (sdc_wr(buff, sector, count))
+            {
+              case SDC_MRC_WR_OK:
+                res = RES_OK;
+                break;
 
-		return res;
+              case SDC_MRC_WR_ERR:
+                res = RES_ERROR;
+                break;
+
+              case SDC_MRC_INIT_ERR:
+              default:
+                break;
+            }
 
         default:
           break;
@@ -148,30 +158,46 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	DRESULT res = RES_PARERR;
-	sdc_mrc_t result;
-
-	switch (drv) {
-	case MMC :
-		// pre-process here
-
-	      if (GET_SECTOR_SIZE == ctrl)
-                {
+  DRESULT res = RES_PARERR;
+  
+      
+  if (SDC_MRC_INIT_OK == sdc_stat())
+    {
+      switch (drv)
+        {
+          case MMC:
+	    switch (ctrl)
+	      {
+                case GET_SECTOR_SIZE:
                   *(DWORD*)buff = 512;
-                  return RES_OK;
-                }
-              else
-                {
-                  *(DWORD*)buff = 0;
-                  return RES_ERROR;
-                }
-//bug		result = sdc_ioctl(ctrl, buff);
-		// post-process here
+                  res = RES_OK;
+                  break;
 
-        default:
-          break;
-	}
-	return res;
+                case CTRL_SYNC:
+                  if (SDC_MRC_RDY == sdc_ioctl(ctrl))                                     
+                    {
+                      res = RES_OK;
+                    }
+                  break;
+
+                default:
+                  *(DWORD*)buff = 0;
+                  res = RES_ERROR;
+                  break;
+	      }
+            break;
+
+          default:
+            break;
+        }
+    }
+  else
+    {
+      res = RES_NOTRDY;
+    }
+
+  return res;
 }
+
 
 

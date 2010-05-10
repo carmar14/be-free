@@ -52,7 +52,8 @@ typedef enum
     SDC_MRC_RD_OK    = 3,
     SDC_MRC_RD_ERR   = 4,
     SDC_MRC_WR_OK    = 5,
-    SDC_MRC_WR_ERR   = 6
+    SDC_MRC_WR_ERR   = 6,
+    SDC_MRC_RDY      = 7
   } sdc_mrc_t;
 
 
@@ -67,7 +68,7 @@ sdc_mrc_t sdc_init (void);
 sdc_mrc_t sdc_stat (void);
 sdc_mrc_t sdc_rd (uint8_t *buff, uint32_t sector, uint8_t count);
 sdc_mrc_t sdc_wr (const uint8_t *buff, uint32_t sector, uint8_t count);
-sdc_mrc_t sdc_ioctl (uint8_t ctrl, void *buff);
+sdc_mrc_t sdc_ioctl (uint8_t ctrl);
 
 
 #endif

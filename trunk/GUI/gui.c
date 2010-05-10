@@ -40,7 +40,6 @@
 #include "./display/display.h"
 #include "./keypad/keypad.h"
 #include "./rtt/rtt.h"
-#include "./tools/tools.h"
 #include "gui.h"
 
 
@@ -185,8 +184,9 @@ static void
 gui_tsk (void)
 {
   char_t buff[16] = "                ";
-  uint8_t key = KEY_NULL;
-  uint8_t i = 0;
+  uint32_t time = 0;
+  uint8_t key   = KEY_NULL;
+  uint8_t i     = 0;
 
   
   vTaskDelay(DLY_1SEC);
@@ -195,7 +195,9 @@ gui_tsk (void)
 
   for (i = 0; ; i++)
     {
-      time2str(buff, rtt_get_time(), FMT_ISO_8601);
+      time = rtt_get_time();
+//bugtraker      rtt_time_fmt(buff, &time, RTT_FMT_ISO_8601);
+      rtt_time_fmt(buff, &time, RTT_FMT_FATFS);
       AT91C_BASE_SSC->SSC_THR = 0xA5;
 
       if (0 == (i % 2))
@@ -342,6 +344,41 @@ test_filesystem (void)
             {
               display_str("File not read   ", 0, 15);
             }
+	  //bugtraker
+          vTaskDelay(DLY_1SEC);
+          ret = f_mkdir("/folder0/newdir");
+	  switch (ret)                                  // Create directory.
+	    {
+	    case FR_OK:
+	      display_str("Directory created", 0, 15);
+              vTaskDelay(DLY_1SEC); 
+              f_chdir("/folder0/newdir");
+              antsh_cmd("ls");
+              f_mkdir("dir0");
+              vTaskDelay(DLY_1SEC); 
+	      break;
+
+	    case FR_NO_PATH:
+	    case FR_INVALID_NAME:
+	    case FR_INVALID_DRIVE:
+              display_str("Invalid path", 0, 15);
+	      break;
+
+	    case FR_EXIST:
+              display_str("Directory exists", 0, 15);
+              vTaskDelay(DLY_1SEC); 
+              f_chdir("/folder0/newdir");
+              antsh_cmd("ls");
+              f_mkdir("dir1");
+              vTaskDelay(DLY_1SEC); 
+
+	      break;
+
+	    default:
+              sprintf(buff, "Error:%d      ", ret);
+              display_str(buff, 0, 15);
+	      break;
+	    }
 
         }
       else
@@ -397,6 +434,9 @@ test_shell (void)
 
   antsh_cmd("ls");
   vTaskDelay(DLY_1SEC); 
+
+  antsh_cmd("mkdir /folder0/dir0");
+  vTaskDelay(DLY_1SEC);
 }
 
 

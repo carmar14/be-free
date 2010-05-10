@@ -4,6 +4,11 @@
 // Date    : 03/02/2010 23:06
 // Website : http://www.bugtraker.pl 
 //
+// This is very simple ANTsh interface tester. It emulates FatFs interface for testing
+// purposes. It does not emulate file system itself. For example, when 'mkdir' command
+// is used, f_mkdir() function is called returning predefined value, and no real file
+// system operation is performed.
+//
 // ANTsh - Copyright (C) 2009 BugTraker (http://www.bugtraker.pl).
 //
 // ANTsh is free software; you can redistribute it and/or modify
@@ -191,4 +196,22 @@ f_chdrive (BYTE Drive)
 {
   return (FR_OK);
 }
+
+
+//---------------------------------------------------------------------------------------
+// 
+// 
+//
+// Arguments:
+// 
+//
+// Return:
+// N/A
+//---------------------------------------------------------------------------------------
+FRESULT 
+f_mkdir (const CHAR* DirName)
+{
+  return (FR_OK);
+}
+
 
