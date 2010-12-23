@@ -34,23 +34,19 @@ OBJDIR = ../Obj
 # CFLAGS for THUMB and ARM builds.
 CFLAGS=                                 \
 -I.                                     \
--I./FreeRTOS                            \
--I./FreeRTOS/include                    \
--I./FreeRTOS/portable                   \
+-I./kernel/freertos                     \
+-I./kernel/freertos/include             \
+-I./kernel/freertos/portable            \
 -I./drivers/display                     \
 -I./drivers/keypad                      \
 -I./drivers/spi                         \
--I./drivers/sdcard                      \
 -I./drivers/rtt                         \
--I./apps/GUI                            \
--I./apps/tools                          \
--I./apps/FatFs                          \
--I./apps/stream                         \
--I./apps/antsh                          \
--I./apps/lwip-1.3.2/src/include         \
--I./apps/lwip-1.3.2/src/include/ipv4    \
--I./apps/lwip-1.3.2/src/include/lwip    \
--I./apps/lwip-1.3.2/contrib/freertos    \
+-I./lib/sdcard                          \
+-I./lib/dogm128                         \
+-I./lib/fatfs                           \
+-I./lib/stream                          \
+-I./lib/antsh                           \
+-I./apps/gui                            \
 -I./system                              \
 -Wall                                   \
 -Wextra                                 \
@@ -73,128 +69,131 @@ THUMB_FLAGS=-mthumb
 LINKER_FLAGS=-Xlinker -o$(OBJDIR)/befree.elf -Xlinker -M -Xlinker -Map=$(OBJDIR)/befree.map
 
 
-# RTOS files that are build in THUMB mode.
-RTOS_THUMB_SRC=                         \
-  FreeRTOS/tasks.c                      \
-  FreeRTOS/queue.c                      \
-  FreeRTOS/list.c                       \
-  FreeRTOS/heap_1.c
-
-RTOS_PORTABLE_THUMB_SRC=                \
-  FreeRTOS/portable/port.c        
+# Kernel 'FreeRTOS' source compiled in thumb mode
+KERNEL_THUMB_SRC=                       \
+  kernel/freertos/tasks.c               \
+  kernel/freertos/queue.c               \
+  kernel/freertos/list.c                \
+  kernel/freertos/heap_1.c              \
+  kernel/freertos/portable/port.c       \
 
 
-# Application files that are build in THUMB mode.
-DRIVERS_DISPLAY_THUMB_SRC=              \
+# Drivers build for the system
+DRIVERS_THUMB_SRC=                      \
   drivers/display/display.c             \
-  drivers/display/lcd1x16_hd44780.c     
-
-DRIVERS_KEYPAD_THUMB_SRC=               \
+  drivers/display/lcd1x16_hd44780.c     \
   drivers/keypad/kpad_matrix3x3.c       \
   drivers/keypad/keypad.c               \
+  drivers/spi/spi.c                     \
 
-APPS_GUI_THUMB_SRC=                     \
-  apps/GUI/gui.c
 
-APPS_TOOLS_THUMB_SRC=                   \
-  apps/tools/tools.c
+# Applications build for the system
+APPS_THUMB_SRC=                         \
+  apps/gui/gui.c
 
-APPS_STREAM_THUMB_SRC=                  \
-  apps/stream/stream.c
 
+# Libraries build into the system
+LIB_THUMB_SRC=                          \
+  lib/stream/stream.c                   \
+  lib/sdcard/sdcard.c                   \
+  lib/fatfs/diskio.c                    \
+  lib/fatfs/ff.c                        \
+  lib/antsh/antsh.c                     \
+  lib/antsh/antsh_io.c                  \
+  lib/dogm128/dogm128.c                 \
+  lib/dogm128/dogmcb.c                  \
+  lib/dogm128/dogmch.c                  \
+  lib/dogm128/dogmcp.c                  \
+  lib/dogm128/dogmcv.c                  \
+  lib/dogm128/dogmda.c                  \
+  lib/dogm128/dogmdl.c                  \
+  lib/dogm128/dogmdp.c                  \
+  lib/dogm128/dogmds.c                  \
+  lib/dogm128/dogmdsp.c                 \
+  lib/dogm128/dogmfonc.c                \
+  lib/dogm128/dogmitoa.c                \
+  lib/dogm128/dogmma.c                  \
+  lib/dogm128/dogmov.c                  \
+  lib/dogm128/dogmsb.c                  \
+  lib/dogm128/dogmsd.c                  \
+  lib/dogm128/dogmsh.c                  \
+  lib/dogm128/dogmsm.c                  \
+  lib/dogm128/dogmsmp.c                 \
+  lib/dogm128/dogmsp.c                  \
+  lib/dogm128/dogmspi.c                 \
+  lib/dogm128/dogmsv.c                  \
+  lib/dogm128/dogmsysc.c                \
+  lib/dogm128/dogmsysi.c                \
+  lib/dogm128/dogmxb.c                  \
+  lib/dogm128/dogmxh.c                  \
+  lib/dogm128/dogmxp.c                  \
+  lib/dogm128/dogmxv.c                  \
+  lib/dogm128/font_4x6.c                \
+  lib/dogm128/font_5x7.c                \
+  lib/dogm128/font_5x8.c                \
+  lib/dogm128/font_6x10.c               \
+  lib/dogm128/font_6x12.c               \
+  lib/dogm128/font_6x13.c               \
+  lib/dogm128/font_6x9.c                \
+  lib/dogm128/font_7x13.c               \
+  lib/dogm128/font_7x14.c               \
+  lib/dogm128/font_8x13.c               \
+  lib/dogm128/font_8x16.c               \
+  lib/dogm128/font_9x15.c               \
+  lib/dogm128/font_9x18.c
+
+
+
+# Main system files
 SYSTEM_THUMB_SRC=                       \
   system/system.c
 
-#  apps/lwip-1.3.2/src/core/tcp_out.c    \
-#  apps/lwip-1.3.2/src/core/mem.c        \
-#  apps/lwip-1.3.2/src/core/memp.c       \
-#  apps/lwip-1.3.2/src/core/netif.c      \
-#  apps/lwip-1.3.2/src/core/pbuf.c       \
-#  apps/lwip-1.3.2/src/core/raw.c        \
-#  apps/lwip-1.3.2/src/core/stats.c      \
-#  apps/lwip-1.3.2/src/core/sys.c        \
-#  apps/lwip-1.3.2/src/core/tcp.c        \
-#  apps/lwip-1.3.2/src/core/tcp_in.c     \
-#  apps/lwip-1.3.2/src/core/ipv4/ip.c    \
-#  apps/lwip-1.3.2/src/core/ipv4/ip_addr.c \
-#  apps/lwip-1.3.2/src/core/ipv4/icmp.c  \
-#  apps/lwip-1.3.2/src/api/tcpip.c       \
-#  apps/lwip-1.3.2/src/api/api_msg.c     \
-#  apps/lwip-1.3.2/src/api/err.c         \
-#  apps/lwip-1.3.2/src/api/api_lib.c     \
-#  apps/lwip-1.3.2/src/api/netbuf.c      \
-#  apps/lwip-1.3.2/src/netif/etharp.c    \
-#  apps/lwip-1.3.2/src/netif/ethernetif.c\
-#  apps/lwip-1.3.2/src/core/udp.c        \
-#  apps/lwip-1.3.2/src/core/init.c       \
-#  apps/lwip-1.3.2/src/core/ipv4/ip_frag.c     \
-#  apps/lwip-1.3.2/src/core/ipv4/inet_chksum.c \
-#  apps/lwip-1.3.2/contrib/freertos/sys_arch.c \
 
-#  FatFs/sdcard.c                        \
-#  FatFs/spi.c                           \
-#  FatFs/diskio.c                        \
-#  FatFs/ff.c                            \
-#  antsh/antsh.c                         \
-#  antsh/antsh_io.c                      \
+# Kernel files build in ARM mode
+KERNEL_ARM_SRC=                         \
+  kernel/freertos/portable/portISR.c
 
 
-
-# RTOS files that are build in ARM mode.
-RTOS_PORTABLE_ARM_SRC=                  \
-  FreeRTOS/portable/portISR.c
-
-DRIVERS_RTT_ARM_SRC=                    \
+# Drivers build in ARM mode
+DRIVERS_ARM_SRC=                        \
   drivers/rtt/rtt.c
 
 
 # Application files that are build in ARM mode.
-RTOS_THUMB_OBJ = $(RTOS_THUMB_SRC:.c=.o)
-RTOS_PORTABLE_THUMB_OBJ = $(RTOS_PORTABLE_THUMB_SRC:.c=.o)
-DRIVERS_DISPLAY_THUMB_OBJ = $(DRIVERS_DISPLAY_THUMB_SRC:.c=.o)
-DRIVERS_KEYPAD_THUMB_OBJ = $(DRIVERS_KEYPAD_THUMB_SRC:.c=.o)
-APPS_GUI_THUMB_OBJ = $(APPS_GUI_THUMB_SRC:.c=.o)
-APPS_TOOLS_THUMB_OBJ = $(APPS_TOOLS_THUMB_SRC:.c=.o)
-APPS_STREAM_THUMB_OBJ = $(APPS_STREAM_THUMB_SRC:.c=.o)
+KERNEL_THUMB_OBJ = $(KERNEL_THUMB_SRC:.c=.o)
+DRIVERS_THUMB_OBJ = $(DRIVERS_THUMB_SRC:.c=.o)
+APPS_THUMB_OBJ = $(APPS_THUMB_SRC:.c=.o)
+LIB_THUMB_OBJ = $(LIB_THUMB_SRC:.c=.o)
 SYSTEM_THUMB_OBJ = $(SYSTEM_THUMB_SRC:.c=.o)
-RTOS_PORTABLE_ARM_OBJ = $(RTOS_PORTABLE_ARM_SRC:.c=.o)
-DRIVERS_RTT_ARM_OBJ = $(DRIVERS_RTT_ARM_SRC:.c=.o)
+KERNEL_ARM_OBJ = $(KERNEL_ARM_SRC:.c=.o)
+DRIVERS_ARM_OBJ = $(DRIVERS_ARM_SRC:.c=.o)
 
 $(OBJDIR)/befree.bin : $(OBJDIR)/befree.elf
 	$(OBJCOPY) $(OBJDIR)/befree.elf -O binary $(OBJDIR)/befree.bin
 
-$(OBJDIR)/befree.elf : $(RTOS_PORTABLE_ARM_OBJ) $(DRIVERS_RTT_ARM_OBJ) $(RTOS_THUMB_OBJ) $(RTOS_PORTABLE_THUMB_OBJ) $(DRIVERS_DISPLAY_THUMB_OBJ) $(DRIVERS_KEYPAD_THUMB_OBJ) $(APPS_GUI_THUMB_OBJ) $(APPS_TOOLS_THUMB_OBJ) $(APPS_STREAM_THUMB_OBJ) $(SYSTEM_THUMB_OBJ) $(CRT0) Makefile ./FreeRTOS/FreeRTOSConfig.h
-	$(CC) $(CFLAGS) $(RTOS_PORTABLE_ARM_OBJ) $(DRIVERS_RTT_ARM_OBJ) $(RTOS_THUMB_OBJ) $(RTOS_PORTABLE_THUMB_OBJ) $(DRIVERS_DISPLAY_THUMB_OBJ) $(DRIVERS_KEYPAD_THUMB_OBJ) $(APPS_GUI_THUMB_OBJ) $(APPS_TOOLS_THUMB_OBJ) $(APPS_STREAM_THUMB_OBJ) $(SYSTEM_THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)
+$(OBJDIR)/befree.elf : $(KERNEL_ARM_OBJ) $(DRIVERS_ARM_OBJ) $(KERNEL_THUMB_OBJ) $(DRIVERS_THUMB_OBJ) $(APPS_THUMB_OBJ) $(LIB_THUMB_OBJ) $(SYSTEM_THUMB_OBJ) $(CRT0) Makefile ./kernel/freertos/FreeRTOSConfig.h
+	$(CC) $(CFLAGS) $(KERNEL_ARM_OBJ) $(DRIVERS_ARM_OBJ) $(KERNEL_THUMB_OBJ) $(DRIVERS_THUMB_OBJ) $(APPS_THUMB_OBJ) $(LIB_THUMB_OBJ) $(SYSTEM_THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)
 
 
-$(RTOS_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
+$(KERNEL_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./kernel/freertos/FreeRTOSConfig.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
 
-$(RTOS_PORTABLE_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
+$(DRIVERS_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./kernel/freertos/FreeRTOSConfig.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
 
-$(DRIVERS_DISPLAY_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
+$(APPS_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./kernel/freertos/FreeRTOSConfig.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
 
-$(DRIVERS_KEYPAD_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
+$(LIB_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./kernel/freertos/FreeRTOSConfig.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
 
-$(APPS_GUI_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
+$(SYSTEM_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./kernel/freertos/FreeRTOSConfig.h
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
 
-$(APPS_TOOLS_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
-	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
-
-$(APPS_STREAM_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
-	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
-
-$(SYSTEM_THUMB_OBJ)  : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
-	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
-
-$(RTOS_PORTABLE_ARM_OBJ) : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
+$(KERNEL_ARM_OBJ) : %.o : %.c $(LDSCRIPT) Makefile ./kernel/freertos/FreeRTOSConfig.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-$(DRIVERS_RTT_ARM_OBJ) : %.o : %.c $(LDSCRIPT) Makefile ./FreeRTOS/FreeRTOSConfig.h
+$(DRIVERS_ARM_OBJ) : %.o : %.c $(LDSCRIPT) Makefile ./kernel/freertos/FreeRTOSConfig.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean :
