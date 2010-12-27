@@ -80,7 +80,11 @@ typedef char rom dog_pgm_char_t;
   Fallback: Standard C
 */
 #else
+#if 0
 #include <stdint.h>
+#else
+#include "types.h"
+#endif
 typedef uint8_t dog_pgm_uint8_t;
 typedef char dog_pgm_char_t;
 #define dog_pgm_read(adr) (*(const dog_pgm_uint8_t *)(adr)) 

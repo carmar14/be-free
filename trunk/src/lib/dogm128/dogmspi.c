@@ -51,7 +51,9 @@
 #elif defined(DOG_SPI_ATMEGA)
 #elif defined(__18CXX)
 #else
+#if 0
 #define DOG_SPI_ARDUINO
+#endif
 #endif
 
 
@@ -444,6 +446,34 @@ void dog_data_mode(void)
 {
   digitalWrite(dog_spi_pin_a0, HIGH);
 }
+
+#else
+
+void dog_spi_init(void)
+{
+}
+
+unsigned char dog_spi_out(unsigned char data)
+{
+  return  data;
+}
+
+void dog_spi_enable_client(void)
+{
+}
+
+void dog_spi_disable_client(void)
+{
+}
+
+void dog_cmd_mode(void)
+{
+}
+
+void dog_data_mode(void)
+{
+}
+
 
 #endif
 

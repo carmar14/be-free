@@ -110,7 +110,7 @@ LIB_THUMB_SRC=                          \
   lib/dogm128/dogmdp.c                  \
   lib/dogm128/dogmds.c                  \
   lib/dogm128/dogmdsp.c                 \
-  lib/dogm128/dogmfonc.c                \
+  lib/dogm128/dogmfont.c                \
   lib/dogm128/dogmitoa.c                \
   lib/dogm128/dogmma.c                  \
   lib/dogm128/dogmov.c                  \
