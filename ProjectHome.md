@@ -1,0 +1,1 @@
+BeFree is a small embedded device that is designed to be an audio player as well as development device. It incorporates dogm128 display, matrix keyboard, audio circuit, SDCard socket, and JTAG.
